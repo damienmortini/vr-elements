@@ -1,0 +1,120 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<!--
+Element providing solution to no problem in particular.
+
+##### Example
+
+    <vr-initializer></vr-initializer>
+
+@element vr-initializer
+@blurb Element providing solution to no problem in particular.
+@status alpha
+@homepage http://dmmn.github.io/vr-initializer
+-->
+<polymer-element name="vr-initializer" constructor="VRInitializer" attributes="canvas fullscreen">
+
+  <script>
+
+    Polymer('vr-initializer', {
+      /**
+       * The `task` method does no work at this time.
+       *
+       * @method task
+       * @return {Object} Returns undefined.
+       * @param {String} dummy Serves no purpose today.
+       */
+      init: function() {
+        if(!this.canvas) {
+          this.canvas = document.querySelector('canvas');
+          if(this.canvas)
+            console.warn('Canvas attribute is undefined, the first canvas element in the DOM is used instead.');
+          else
+            console.error('Canvas attribute is `undefined` and no canvas is present in the DOM.');
+        }
+        if (navigator.getVRDevices) {
+          navigator.getVRDevices().then(this.onGetVRDevices.bind(this));
+        } else if (navigator.mozGetVRDevices) {
+          navigator.mozGetVRDevices(this.onGetVRDevices.bind(this));
+        }
+      },
+
+      onGetVRDevices: function(vrDevices) {
+        for (var i = 0; i < vrDevices.length; i++) {
+          if (vrDevices[i] instanceof HMDVRDevice) {
+            hmdVRDevice = vrDevices[i];
+            break;
+          }
+        }
+
+        for (var i = 0; i < vrDevices.length; i++) {
+          if (vrDevices[i] instanceof PositionSensorVRDevice && vrDevices[i].hardwareUnitId == hmdVRDevice.hardwareUnitId) {
+            positionSensorVRDevice = vrDevices[i];
+            break;
+          }
+        }
+
+        if (!hmdVRDevice || !positionSensorVRDevice) {
+          console.error("Couldn't find any VR Device and/or sensor!");
+          return;
+        }
+
+        if(this.fullscreen) {
+          if (this.canvas.webkitRequestFullscreen) {
+            this.canvas.webkitRequestFullscreen({ vrDisplay: hmdVRDevice });
+          } else if (this.canvas.mozRequestFullScreen) {
+            this.canvas.mozRequestFullScreen({ vrDisplay: hmdVRDevice });
+          }
+        }
+
+        this.fire('initialize', {hmdVRDevice: hmdVRDevice, positionSensorVRDevice: positionSensorVRDevice});
+      }
+
+    });
+
+  </script>
+
+</polymer-element>
+
+<!--
+Element providing solution to no problem in particular.
+
+##### Example
+
+    <vr-button></vr-button>
+
+@element vr-button
+@blurb Element providing solution to no problem in particular.
+@status alpha
+@homepage http://dmmn.github.io/vr-button
+-->
+<polymer-element name="vr-button" extends="vr-initializer">
+
+  <template>
+    <style>
+      :host {
+        display: inline-block;
+        vertical-align: middle;
+        width: 50px;
+        height: 50px;
+        background: url(logo_cb.svg) white no-repeat center;
+        background-size: 60%;
+        box-shadow: 0 2px 10px 0 rgba(0,0,0,.26);
+        margin: 10px;
+        cursor: pointer;
+        border-radius: 50%;
+      }
+    </style>
+  </template>
+
+  <script>
+
+    Polymer('vr-button', {
+      ready: function() {
+        this.addEventListener('click', this.init.bind(this));
+      }
+    });
+
+  </script>
+
+</polymer-element>
