@@ -25,6 +25,17 @@ Element providing solution to no problem in particular.
        * @param {String} dummy Serves no purpose today.
        */
       init: function() {
+        if (navigator.getVRDevices) {
+          navigator.getVRDevices().then(this.onGetVRDevices_.bind(this));
+        } else if (navigator.mozGetVRDevices) {
+          navigator.mozGetVRDevices(this.onGetVRDevices_.bind(this));
+        }
+        else {
+          console.error('Your current browser doesn\'t have support for navigator.getVRDevices yet, please download Chromium here http://blog.tojicode.com/2014/07/bringing-vr-to-chrome.html or Firefox Nightly here http://blog.bitops.com/blog/2014/06/26/first-steps-for-vr-on-the-web');
+        }
+      },
+
+      onGetVRDevices_: function(vrDevices) {
         if(!this.canvas) {
           this.canvas = document.querySelector('canvas');
           if(this.canvas)
@@ -32,14 +43,7 @@ Element providing solution to no problem in particular.
           else
             console.error('Canvas attribute is `undefined` and no canvas is present in the DOM.');
         }
-        if (navigator.getVRDevices) {
-          navigator.getVRDevices().then(this.onGetVRDevices.bind(this));
-        } else if (navigator.mozGetVRDevices) {
-          navigator.mozGetVRDevices(this.onGetVRDevices.bind(this));
-        }
-      },
 
-      onGetVRDevices: function(vrDevices) {
         for (var i = 0; i < vrDevices.length; i++) {
           if (vrDevices[i] instanceof HMDVRDevice) {
             hmdVRDevice = vrDevices[i];
@@ -59,7 +63,9 @@ Element providing solution to no problem in particular.
           return;
         }
 
-        if(this.fullscreen) {
+        console.log(positionSensorVRDevice);
+
+        if(this.fullscreen !== null) {
           if (this.canvas.webkitRequestFullscreen) {
             this.canvas.webkitRequestFullscreen({ vrDisplay: hmdVRDevice });
           } else if (this.canvas.mozRequestFullScreen) {
@@ -93,24 +99,38 @@ Element providing solution to no problem in particular.
   <template>
     <style>
       :host {
+        box-sizing: border-box;
         display: inline-block;
         vertical-align: middle;
-        width: 50px;
-        height: 50px;
-        background: url(logo_cb.svg) white no-repeat center;
-        background-size: 60%;
+        background-color: white;
         box-shadow: 0 2px 10px 0 rgba(0,0,0,.26);
         margin: 10px;
         cursor: pointer;
-        border-radius: 50%;
+        border-radius: 20px;
+        padding: 10px;
+        border-radius: 20px;
+      }
+      :host svg {
+        display: inline-block;
+        width: 18px;
       }
     </style>
+    <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+       viewBox="0 211.6 1000 576.8" enable-background="new 0 211.6 1000 576.8" xml:space="preserve">
+    <path fill="#000000" d="M958,211.6H42c-21.6,0-39,17.5-39,39v498.7c0,21.6,17.5,39,39,39h325.4c10.8,0,20.4-7.2,23.4-17.6
+      c36.5-125.4,44-196.9,112.8-196.9c68.7,0,78.9,81.7,111.2,197.4c2.8,10.1,12,17,22.5,17H958c21.6,0,39-17.5,39-39V250.7
+      C997,229.1,979.6,211.6,958,211.6z M277.5,603.7c-57.3,0-103.7-46.4-103.7-103.7s46.4-103.7,103.7-103.7S381.1,442.7,381.1,500
+      S334.7,603.7,277.5,603.7z M722.5,603.7c-57.3,0-103.7-46.4-103.7-103.7s46.4-103.7,103.7-103.7c57.3,0,103.7,46.4,103.7,103.7
+      S779.8,603.7,722.5,603.7z"/>
+    </svg>
+    <content></content>
   </template>
 
   <script>
 
     Polymer('vr-button', {
       ready: function() {
+        this.super();
         this.addEventListener('click', this.init.bind(this));
       }
     });

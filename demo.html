@@ -13,14 +13,22 @@
       overflow: hidden;
       margin: 0;
     }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    vr-button {
+      position: relative;
+    }
   </style>
 
 </head>
 <body unresolved>
   
-  <vr-button></vr-button>
-
   <canvas></canvas>
+
+  <vr-button fullscreen></vr-button>
 
   <script>
     var positionSensorVRDevice = null;
@@ -56,7 +64,7 @@
       'precision mediump float;' +
       'varying vec2 v_position;' +
       'void main() {' +
-          'gl_FragColor = vec4(v_position, 1, 1);' +
+          'gl_FragColor = vec4(gl_FragCoord.xy / 1000.0, 1, 1);' +
       '}'
     );
     gl.compileShader(fragmentShader);
@@ -72,9 +80,9 @@
     var buffer = gl.createBuffer();
      
     var bufferData = [
-        1, -1,
-        0, 1,
-        -1, -1
+        -1, -1,
+        1, 1,
+        -1, 1
     ];
      
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -88,7 +96,7 @@
 
     function update() {
       requestAnimationFrame(update);
-      console.log(positionSensorVRDevice.getState().position);
+      console.log(positionSensorVRDevice.getState().position.x);
     }
   </script>
 
