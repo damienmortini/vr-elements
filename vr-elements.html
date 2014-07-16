@@ -5,75 +5,152 @@ Element providing solution to no problem in particular.
 
 ##### Example
 
-    <vr-initializer></vr-initializer>
+    <vr-element></vr-element>
 
-@element vr-initializer
+@element vr-element
 @blurb Element providing solution to no problem in particular.
 @status alpha
-@homepage http://dmmn.github.io/vr-initializer
+@homepage http://dmmn.github.io/vr-element
 -->
-<polymer-element name="vr-initializer" constructor="VRInitializer" attributes="canvas fullscreen">
+<polymer-element name="vr-element" attributes="nosplit autoinit">
+
+  <template>
+    <style>
+      :host {
+        display: block;
+        position: relative;
+      }
+      :host #mainContainer, :host #sideContainer {
+        position: absolute;
+        overflow: hidden;
+        width: 50%;
+        height: 100%;
+        top: 0;
+      };
+      :host #mainContainer {
+        left: 0;
+      }
+      :host #sideContainer {
+        left: 50%;
+      }
+    </style>
+    <div id="mainContainer">
+      <content></content>
+    </div>
+    <div id="sideContainer"></div>
+  </template>
 
   <script>
 
-    Polymer('vr-initializer', {
-      /**
-       * The `task` method does no work at this time.
-       *
-       * @method task
-       * @return {Object} Returns undefined.
-       * @param {String} dummy Serves no purpose today.
-       */
-      init: function() {
-        if (navigator.getVRDevices) {
-          navigator.getVRDevices().then(this.onGetVRDevices_.bind(this));
-        } else if (navigator.mozGetVRDevices) {
-          navigator.mozGetVRDevices(this.onGetVRDevices_.bind(this));
-        }
-        else {
-          console.error('Your current browser doesn\'t have support for navigator.getVRDevices yet, please download Chromium here http://blog.tojicode.com/2014/07/bringing-vr-to-chrome.html or Firefox Nightly here http://blog.bitops.com/blog/2014/06/26/first-steps-for-vr-on-the-web');
+    Polymer('vr-element', {
+
+      ready: function() {
+        this.hmdVRDevice = null;
+        this.positionSensorVRDevice = null;
+
+        if(!this.nosplit) {
+          function copyStyles(mainElement, copyElement) {
+            console.log(mainElement.style, copyElement.style);
+          };
+
+          // todo: check how handle content with polymer to duplicate it on the root
+
+          for (var i = 0, l = this.children.length; i < l; i++) {
+            // var element = this.children[i];
+            this.$.sideContainer.appendChild(this.children[i].cloneNode(true));
+          };
+
+
+          function linkNodes(mainElement, linkedElement) {
+            mainElement.linkedElement = linkedElement;
+            console.log(mainElement.linkedElement, linkedElement);
+            for (var i = 0, l = mainElement.children.length; i < l; i++) {
+              linkNodes(mainElement.children[i], linkedElement.children[i])
+            };
+          };
+
+          linkNodes(this, this.$.sideContainer);
+          
+          var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+              console.log(mutation);
+              switch (mutation.type) {
+                case 'childList':
+                  for (var i = 0, l = mutation.addedNodes.length; i < l; i++) {
+                    var element = mutation.addedNodes[i];
+                    var linkedElement = element.cloneNode(true);
+                    linkNodes(element, linkedElement);
+                    mutation.target.linkedElement.appendChild(linkedElement);
+                  };
+                  for (var i = 0, l = mutation.removedNodes.length; i < l; i++) {
+                    mutation.removedNodes[i].linkedElement.remove();
+                  };
+                  break;
+              }
+              console.dir(mutation.target[mutation.attributeName]);
+              var changedAttribute = mutation.target[mutation.attributeName];
+              // console.log(typeof changedAttribute);
+              // mutation.target.linkedElement[mutation.attributeName] = mutation.target[mutation.attributeName];
+            });    
+          });
+
+          var config = { attributes: true, childList: true, characterData: true, subtree: true };
+          
+          observer.observe(this, config);
+
+
+          // this.querySelector('h1').style.background = 'red';
+          var d = document.createElement('div');
+          d.innerHTML = 'fdskjhf';
+          this.querySelector('h1').appendChild(d);
+          d.remove();
+
+          // this.querySelector('h1').addEventListener('click', function () {
+          //   console.log("vdfs");
+          // })
         }
       },
 
-      onGetVRDevices_: function(vrDevices) {
-        if(!this.canvas) {
-          this.canvas = document.querySelector('canvas');
-          if(this.canvas)
-            console.warn('Canvas attribute is undefined, the first canvas element in the DOM is used instead.');
-          else
-            console.error('Canvas attribute is `undefined` and no canvas is present in the DOM.');
-        }
-
-        for (var i = 0; i < vrDevices.length; i++) {
-          if (vrDevices[i] instanceof HMDVRDevice) {
-            hmdVRDevice = vrDevices[i];
-            break;
+      getSensor: function () {
+        return new Promise(function(resolve, reject) {
+          function onGetVRDevices(vrDevices) {
+            for (var i = 0; i < vrDevices.length; i++) {
+              if (vrDevices[i] instanceof HMDVRDevice) {
+                this.hmdVRDevice = vrDevices[i];
+                break;
+              }
+            }
+            for (var i = 0; i < vrDevices.length; i++) {
+              if (vrDevices[i] instanceof PositionSensorVRDevice && vrDevices[i].hardwareUnitId === this.hmdVRDevice.hardwareUnitId) {
+                this.positionSensorVRDevice = vrDevices[i];
+                break;
+              }
+            }
+            if (!this.hmdVRDevice || !this.positionSensorVRDevice) {
+              reject(Error('Couldn\'t find any VR Device and/or sensor!'));
+              return;
+            }
+            resolve({positionSensorVRDevice: this.positionSensorVRDevice});
           }
-        }
 
-        for (var i = 0; i < vrDevices.length; i++) {
-          if (vrDevices[i] instanceof PositionSensorVRDevice && vrDevices[i].hardwareUnitId == hmdVRDevice.hardwareUnitId) {
-            positionSensorVRDevice = vrDevices[i];
-            break;
+          if (navigator.getVRDevices) {
+            navigator.getVRDevices().then(onGetVRDevices.bind(this));
           }
-        }
-
-        if (!hmdVRDevice || !positionSensorVRDevice) {
-          console.error("Couldn't find any VR Device and/or sensor!");
-          return;
-        }
-
-        console.log(positionSensorVRDevice);
-
-        if(this.fullscreen !== null) {
-          if (this.canvas.webkitRequestFullscreen) {
-            this.canvas.webkitRequestFullscreen({ vrDisplay: hmdVRDevice });
-          } else if (this.canvas.mozRequestFullScreen) {
-            this.canvas.mozRequestFullScreen({ vrDisplay: hmdVRDevice });
+          else if (navigator.mozGetVRDevices) {
+            navigator.mozGetVRDevices(onGetVRDevices.bind(this));
           }
-        }
+          else {
+            reject('Your current browser doesn\'t have support for navigator.getVRDevices yet, please download Chromium here http://blog.tojicode.com/2014/07/bringing-vr-to-chrome.html or Firefox Nightly here http://blog.bitops.com/blog/2014/06/26/first-steps-for-vr-on-the-web');
+          }
+        });
+      },
 
-        this.fire('initialize', {hmdVRDevice: hmdVRDevice, positionSensorVRDevice: positionSensorVRDevice});
+      requestFullscreen: function () {
+        if (this.webkitRequestFullscreen) {
+          this.webkitRequestFullscreen({ vrDisplay: this.hmdVRDevice });
+        } else if (this.mozRequestFullScreen) {
+          this.mozRequestFullScreen({ vrDisplay: this.hmdVRDevice });
+        }
       }
 
     });
@@ -94,7 +171,7 @@ Element providing solution to no problem in particular.
 @status alpha
 @homepage http://dmmn.github.io/vr-button
 -->
-<polymer-element name="vr-button" extends="vr-initializer">
+<polymer-element name="vr-button" noscript>
 
   <template>
     <style>
@@ -125,16 +202,5 @@ Element providing solution to no problem in particular.
     </svg>
     <content></content>
   </template>
-
-  <script>
-
-    Polymer('vr-button', {
-      ready: function() {
-        this.super();
-        this.addEventListener('click', this.init.bind(this));
-      }
-    });
-
-  </script>
 
 </polymer-element>

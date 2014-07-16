@@ -1,0 +1,19 @@
+{
+  "name": "vr-elements",
+  "keywords": "seed, polymer, web-components",
+  "main": "vr-elements.html",
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.3.1"
+  },
+  "homepage": "https://github.com/dmmn/vr-elements",
+  "_release": "0fd15dcc16",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "0fd15dcc16fabdd2da4ed06324e17f96f52a8dd4"
+  },
+  "_source": "https://github.com/dmmn/vr-elements.git",
+  "_target": "*",
+  "_originalSource": "https://github.com/dmmn/vr-elements.git",
+  "_direct": true
+}
