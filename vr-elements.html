@@ -23,12 +23,12 @@ Element providing solution to no problem in particular.
       :host #mainContainer, :host #sideContainer {
         position: absolute;
         overflow: hidden;
-        width: 50%;
+        width: 40%;
         height: 100%;
         top: 0;
-      };
+      }
       :host #mainContainer {
-        left: 0;
+        left: 10%;
       }
       :host #sideContainer {
         left: 50%;
@@ -44,70 +44,86 @@ Element providing solution to no problem in particular.
 
     Polymer('vr-element', {
 
-      ready: function() {
-        this.hmdVRDevice = null;
+      domReady: function() {
+        this.hmdVRDevice = null; 
         this.positionSensorVRDevice = null;
 
+        // COPY
+
         if(!this.nosplit) {
+          var mainNodes = [];
+          var copyNodes = [];
+
           function copyStyles(mainElement, copyElement) {
-            console.log(mainElement.style, copyElement.style);
+            // mainElement.hidden = copyElement.hidden = true;
+            var styleMain = getComputedStyle(mainElement);
+            var styleCopy = getComputedStyle(copyElement);
+            for (var i = 0; i < styleMain.length; i++) {
+              var property = styleMain[i];
+              if(styleMain[property] !== styleCopy[property]) {
+                copyElement.style[property] = styleMain[property];
+              }
+            };
+            // mainElement.hidden = copyElement.hidden = false;
           };
-
-          // todo: check how handle content with polymer to duplicate it on the root
-
-          for (var i = 0, l = this.children.length; i < l; i++) {
-            // var element = this.children[i];
-            this.$.sideContainer.appendChild(this.children[i].cloneNode(true));
-          };
-
 
           function linkNodes(mainElement, linkedElement) {
             mainElement.linkedElement = linkedElement;
-            console.log(mainElement.linkedElement, linkedElement);
-            for (var i = 0, l = mainElement.children.length; i < l; i++) {
-              linkNodes(mainElement.children[i], linkedElement.children[i])
+            copyStyles(mainElement, linkedElement);
+            for (var i = 0; i < mainElement.children.length; i++) {
+              linkNodes(mainElement.children[i], linkedElement.children[i]);
             };
           };
 
-          linkNodes(this, this.$.sideContainer);
+          for (var i = 0; i < this.children.length; i++) {
+            var mainElement = this.children[i];
+            var copyElement = mainElement.cloneNode(true);
+            this.$.sideContainer.appendChild(copyElement);
+            linkNodes(mainElement, copyElement);
+          };
+
+          // MUTATION OBSERVER
           
           var observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
-              console.log(mutation);
               switch (mutation.type) {
                 case 'childList':
                   for (var i = 0, l = mutation.addedNodes.length; i < l; i++) {
                     var element = mutation.addedNodes[i];
+                    if(element.nodeType === Node.TEXT_NODE) {
+                      element.parentNode.linkedElement.innerText = element.data;
+                      continue;
+                    }
                     var linkedElement = element.cloneNode(true);
                     linkNodes(element, linkedElement);
                     mutation.target.linkedElement.appendChild(linkedElement);
                   };
                   for (var i = 0, l = mutation.removedNodes.length; i < l; i++) {
+                    if(element.nodeType === Node.TEXT_NODE) {
+                      continue;
+                    }
                     mutation.removedNodes[i].linkedElement.remove();
                   };
                   break;
+                case 'attributes':
+                  if (mutation.attributeName === 'style' || mutation.attributeName === 'class' || mutation.attributeName === 'id') {
+                    copyStyles(mutation.target, mutation.target.linkedElement);
+                  }
+                  else {
+                    mutation.target.linkedElement[mutation.attributeName] = mutation.target[mutation.attributeName];
+                  }
+                  break;
+                case 'characterData' :
+                  mutation.target.parentNode.linkedElement.innerHTML = mutation.target.parentNode.innerHTML;
+                  break;
               }
-              console.dir(mutation.target[mutation.attributeName]);
               var changedAttribute = mutation.target[mutation.attributeName];
-              // console.log(typeof changedAttribute);
-              // mutation.target.linkedElement[mutation.attributeName] = mutation.target[mutation.attributeName];
             });    
           });
 
           var config = { attributes: true, childList: true, characterData: true, subtree: true };
           
           observer.observe(this, config);
-
-
-          // this.querySelector('h1').style.background = 'red';
-          var d = document.createElement('div');
-          d.innerHTML = 'fdskjhf';
-          this.querySelector('h1').appendChild(d);
-          d.remove();
-
-          // this.querySelector('h1').addEventListener('click', function () {
-          //   console.log("vdfs");
-          // })
         }
       },
 
