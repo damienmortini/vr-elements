@@ -12,7 +12,7 @@ Element providing solution to no problem in particular.
 @status alpha
 @homepage http://dmmn.github.io/vr-element
 -->
-<polymer-element name="vr-element" attributes="nosplit autoinit">
+<polymer-element name="vr-element" attributes="nosplit">
 
   <template>
     <style>
@@ -66,7 +66,7 @@ Element providing solution to no problem in particular.
 
         // COPY
 
-        if(!this.nosplit) {
+        if(this.nosplit === null) {
 
           console.warn('TEMP: Need to target also ::shadow in css to have style into Shadow Dom (for right eye).');
 
