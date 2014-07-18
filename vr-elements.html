@@ -20,24 +20,40 @@ Element providing solution to no problem in particular.
         display: block;
         position: relative;
       }
-      :host #mainContainer, :host #sideContainer {
+      :host #vrMainContainer, :host #vrMainContent, :host #vrSideContainer, :host #vrSideContent {
         position: absolute;
-        overflow: hidden;
-        width: 40%;
         height: 100%;
         top: 0;
       }
-      :host #mainContainer {
-        left: 10%;
+      :host(:not(.vr-splitted)) #vrMainContainer, :host(:not(.vr-splitted)) #vrMainContent {
+        width: 100%;
+        left: 0;
       }
-      :host #sideContainer {
-        left: 50%;
+      :host(:not(.vr-splitted)) #vrSideContainer {
+        display: none;
+      }
+      :host(.vr-splitted) #vrMainContainer, :host(.vr-splitted) #vrSideContainer {
+        overflow: hidden;
+        width: 50%;
+      }
+      :host(.vr-splitted) #vrMainContent, :host(.vr-splitted) #vrSideContent {
+        width: 120%;
+      }
+      :host(.vr-splitted) #vrMainContainer, :host(.vr-splitted) #vrMainContent {
+        left: 0;
+      }
+      :host(.vr-splitted) #vrSideContainer, :host(.vr-splitted) #vrSideContent {
+        right: 0;
       }
     </style>
-    <div id="mainContainer">
-      <content></content>
+    <div id="vrMainContainer">
+      <div id="vrMainContent">
+        <content></content>
+      </div>
     </div>
-    <div id="sideContainer"></div>
+    <div id="vrSideContainer">
+      <div id="vrSideContent"></div>
+    </div>
   </template>
 
   <script>
@@ -51,20 +67,30 @@ Element providing solution to no problem in particular.
         // COPY
 
         if(!this.nosplit) {
-          var mainNodes = [];
-          var copyNodes = [];
+
+          console.warn('TEMP: Need to target also ::shadow in css to have style into Shadow Dom (for right eye).');
+
+          this.classList.add('vr-splitted');
 
           function copyStyles(mainElement, copyElement) {
+            // old fashion way without need of shadow in css
+            // 
             // mainElement.hidden = copyElement.hidden = true;
-            var styleMain = getComputedStyle(mainElement);
-            var styleCopy = getComputedStyle(copyElement);
-            for (var i = 0; i < styleMain.length; i++) {
-              var property = styleMain[i];
-              if(styleMain[property] !== styleCopy[property]) {
-                copyElement.style[property] = styleMain[property];
-              }
-            };
+            // var styleMain = getComputedStyle(mainElement);
+            // var styleCopy = getComputedStyle(copyElement);
+            // for (var i = 0; i < styleMain.length; i++) {
+            //   var property = styleMain[i];
+            //   if(styleMain[property] !== styleCopy[property]) {
+            //     copyElement.style[property] = styleMain[property];
+            //   }
+            // };
             // mainElement.hidden = copyElement.hidden = false;
+            // 
+
+            for (var i = 0; i < mainElement.style.length; i++) {
+              var property = mainElement.style[i];
+              copyElement.style[property] = mainElement.style[property];
+            };
           };
 
           function linkNodes(mainElement, linkedElement) {
@@ -78,7 +104,7 @@ Element providing solution to no problem in particular.
           for (var i = 0; i < this.children.length; i++) {
             var mainElement = this.children[i];
             var copyElement = mainElement.cloneNode(true);
-            this.$.sideContainer.appendChild(copyElement);
+            this.$.vrSideContent.appendChild(copyElement);
             linkNodes(mainElement, copyElement);
           };
 
@@ -106,8 +132,11 @@ Element providing solution to no problem in particular.
                   };
                   break;
                 case 'attributes':
-                  if (mutation.attributeName === 'style' || mutation.attributeName === 'class' || mutation.attributeName === 'id') {
+                  if (mutation.attributeName === 'style') {
                     copyStyles(mutation.target, mutation.target.linkedElement);
+                  }
+                  else if (mutation.attributeName === 'class') {
+                    mutation.target.linkedElement.className = mutation.target.className;
                   }
                   else {
                     mutation.target.linkedElement[mutation.attributeName] = mutation.target[mutation.attributeName];
