@@ -101,12 +101,19 @@ Element providing solution to no problem in particular.
             };
           };
 
+          function onElementScroll (e) {
+            e.target.linkedElement.scrollTop = e.target.scrollTop;
+            e.target.linkedElement.scrollLeft = e.target.scrollLeft;
+          }
+
           for (var i = 0; i < this.children.length; i++) {
             var mainElement = this.children[i];
             var copyElement = mainElement.cloneNode(true);
             this.$.vrSideContent.appendChild(copyElement);
             linkNodes(mainElement, copyElement);
           };
+
+          this.addEventListener('scroll', onElementScroll, true);
 
           // MUTATION OBSERVER
           
