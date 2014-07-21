@@ -60,107 +60,128 @@ Element providing solution to no problem in particular.
 
     Polymer('vr-element', {
 
-      domReady: function() {
+      created: function() {
         this.hmdVRDevice = null; 
         this.positionSensorVRDevice = null;
+      },
+
+      domReady: function() {
+        if(this.nosplit === null) {
+          setTimeout(this.split.bind(this), 0);
+        }
+      },
+
+      split: function() {
+
+        // MUTATION OBSERVER
+        
+        var observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            switch (mutation.type) {
+              case 'childList':
+                for (var i = 0, l = mutation.addedNodes.length; i < l; i++) {
+                  var element = mutation.addedNodes[i];
+                  if(element.nodeType === Node.TEXT_NODE) {
+                    element.parentNode.linkedElement.innerText = element.data;
+                    continue;
+                  }
+                  mutation.target.linkedElement.appendChild(cloneAndLinkElement(element));
+                };
+                for (var i = 0, l = mutation.removedNodes.length; i < l; i++) {
+                  if(element.nodeType === Node.TEXT_NODE) {
+                    continue;
+                  }
+                  mutation.removedNodes[i].linkedElement.remove();
+                };
+                break;
+              case 'attributes':
+                if (mutation.attributeName === 'style') {
+                  copyStyles(mutation.target, mutation.target.linkedElement);
+                }
+                else if (mutation.attributeName === 'class') {
+                  mutation.target.linkedElement.className = mutation.target.className;
+                }
+                else {
+                  mutation.target.linkedElement[mutation.attributeName] = mutation.target[mutation.attributeName];
+                }
+                break;
+              case 'characterData' :
+                mutation.target.parentNode.linkedElement.innerHTML = mutation.target.parentNode.innerHTML;
+                break;
+            }
+            var changedAttribute = mutation.target[mutation.attributeName];
+          });    
+        });
+
+        var mutationObserverConfig = { attributes: true, childList: true, characterData: true};
 
         // COPY
 
-        if(this.nosplit === null) {
+        console.warn('TEMP: Need to target also ::shadow in css to have style into Shadow Dom (for right eye).');
 
-          console.warn('TEMP: Need to target also ::shadow in css to have style into Shadow Dom (for right eye).');
+        this.classList.add('vr-splitted');
 
-          this.classList.add('vr-splitted');
+        function copyStyles(mainElement, copyElement) {
+          // old fashion way without need of shadow in css
+          // 
+          // mainElement.hidden = copyElement.hidden = true;
+          // var styleMain = getComputedStyle(mainElement);
+          // var styleCopy = getComputedStyle(copyElement);
+          // for (var i = 0; i < styleMain.length; i++) {
+          //   var property = styleMain[i];
+          //   if(styleMain[property] !== styleCopy[property]) {
+          //     copyElement.style[property] = styleMain[property];
+          //   }
+          // };
+          // mainElement.hidden = copyElement.hidden = false;
+          // 
 
-          function copyStyles(mainElement, copyElement) {
-            // old fashion way without need of shadow in css
-            // 
-            // mainElement.hidden = copyElement.hidden = true;
-            // var styleMain = getComputedStyle(mainElement);
-            // var styleCopy = getComputedStyle(copyElement);
-            // for (var i = 0; i < styleMain.length; i++) {
-            //   var property = styleMain[i];
-            //   if(styleMain[property] !== styleCopy[property]) {
-            //     copyElement.style[property] = styleMain[property];
-            //   }
-            // };
-            // mainElement.hidden = copyElement.hidden = false;
-            // 
-
-            for (var i = 0; i < mainElement.style.length; i++) {
-              var property = mainElement.style[i];
-              copyElement.style[property] = mainElement.style[property];
-            };
+          for (var i = 0; i < mainElement.style.length; i++) {
+            var property = mainElement.style[i];
+            copyElement.style[property] = mainElement.style[property];
           };
+        };
 
-          function linkNodes(mainElement, linkedElement) {
-            mainElement.linkedElement = linkedElement;
-            copyStyles(mainElement, linkedElement);
-            for (var i = 0; i < mainElement.children.length; i++) {
-              linkNodes(mainElement.children[i], linkedElement.children[i]);
-            };
+        function cloneAndLinkElement(element) {
+          var clone = element.cloneNode();
+
+          var children = [];
+          for (var i = 0; i < element.children.length; i++) {
+            children.push(cloneAndLinkElement(element.children[i]));
           };
-
-          function onElementScroll (e) {
-            e.target.linkedElement.scrollTop = e.target.scrollTop;
-            e.target.linkedElement.scrollLeft = e.target.scrollLeft;
+          for (var i = 0; i < children.length; i++) {
+            clone.appendChild(children[i]);
+          };
+          if(element.shadowRoot) {
+            children = [];
+            for (var i = 0; i < element.shadowRoot.children.length; i++) {
+              children.push(cloneAndLinkElement(element.shadowRoot.children[i]));
+            };
+            for (var i = 0; i < children.length; i++) {
+              clone.shadowRoot.appendChild(children[i]);
+            };
           }
 
-          for (var i = 0; i < this.children.length; i++) {
-            var mainElement = this.children[i];
-            var copyElement = mainElement.cloneNode(true);
-            this.$.vrSideContent.appendChild(copyElement);
-            linkNodes(mainElement, copyElement);
-          };
+          element.linkedElement = clone;
+          copyStyles(element, clone);
 
-          this.addEventListener('scroll', onElementScroll, true);
+          observer.observe(element, mutationObserverConfig);
 
-          // MUTATION OBSERVER
-          
-          var observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-              switch (mutation.type) {
-                case 'childList':
-                  for (var i = 0, l = mutation.addedNodes.length; i < l; i++) {
-                    var element = mutation.addedNodes[i];
-                    if(element.nodeType === Node.TEXT_NODE) {
-                      element.parentNode.linkedElement.innerText = element.data;
-                      continue;
-                    }
-                    var linkedElement = element.cloneNode(true);
-                    linkNodes(element, linkedElement);
-                    mutation.target.linkedElement.appendChild(linkedElement);
-                  };
-                  for (var i = 0, l = mutation.removedNodes.length; i < l; i++) {
-                    if(element.nodeType === Node.TEXT_NODE) {
-                      continue;
-                    }
-                    mutation.removedNodes[i].linkedElement.remove();
-                  };
-                  break;
-                case 'attributes':
-                  if (mutation.attributeName === 'style') {
-                    copyStyles(mutation.target, mutation.target.linkedElement);
-                  }
-                  else if (mutation.attributeName === 'class') {
-                    mutation.target.linkedElement.className = mutation.target.className;
-                  }
-                  else {
-                    mutation.target.linkedElement[mutation.attributeName] = mutation.target[mutation.attributeName];
-                  }
-                  break;
-                case 'characterData' :
-                  mutation.target.parentNode.linkedElement.innerHTML = mutation.target.parentNode.innerHTML;
-                  break;
-              }
-              var changedAttribute = mutation.target[mutation.attributeName];
-            });    
-          });
+          return clone;
+        };
 
-          var config = { attributes: true, childList: true, characterData: true, subtree: true };
-          
-          observer.observe(this, config);
+        function onElementScroll (e) {
+          e.target.linkedElement.scrollTop = e.target.scrollTop;
+          e.target.linkedElement.scrollLeft = e.target.scrollLeft;
         }
+
+        var temp = document.createElement('div');
+
+        for (var i = 0; i < this.children.length; i++) {
+          this.$.vrSideContent.appendChild(cloneAndLinkElement(this.children[i]));
+        };
+
+        this.addEventListener('scroll', onElementScroll, true);
       },
 
       getSensor: function () {
