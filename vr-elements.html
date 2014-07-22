@@ -88,9 +88,6 @@ Element providing solution to no problem in particular.
                   mutation.target.linkedElement.appendChild(cloneAndLinkElement(element));
                 };
                 for (var i = 0, l = mutation.removedNodes.length; i < l; i++) {
-                  if(element.nodeType === Node.TEXT_NODE) {
-                    continue;
-                  }
                   mutation.removedNodes[i].linkedElement.remove();
                 };
                 break;
@@ -105,7 +102,7 @@ Element providing solution to no problem in particular.
                   mutation.target.linkedElement[mutation.attributeName] = mutation.target[mutation.attributeName];
                 }
                 break;
-              case 'characterData' :
+              case 'characterData':
                 mutation.target.parentNode.linkedElement.innerHTML = mutation.target.parentNode.innerHTML;
                 break;
             }
@@ -122,7 +119,7 @@ Element providing solution to no problem in particular.
         this.classList.add('vr-splitted');
 
         function copyStyles(mainElement, copyElement) {
-          // old fashion way without need of shadow in css
+          // Old fashion way without need of shadow in css but doesn't properly copy transitions
           // 
           // mainElement.hidden = copyElement.hidden = true;
           // var styleMain = getComputedStyle(mainElement);
@@ -145,27 +142,29 @@ Element providing solution to no problem in particular.
         function cloneAndLinkElement(element) {
           var clone = element.cloneNode();
 
-          var children = [];
-          for (var i = 0; i < element.children.length; i++) {
-            children.push(cloneAndLinkElement(element.children[i]));
-          };
-          for (var i = 0; i < children.length; i++) {
-            clone.appendChild(children[i]);
-          };
-          if(element.shadowRoot) {
-            children = [];
-            for (var i = 0; i < element.shadowRoot.children.length; i++) {
-              children.push(cloneAndLinkElement(element.shadowRoot.children[i]));
-            };
-            for (var i = 0; i < children.length; i++) {
-              clone.shadowRoot.appendChild(children[i]);
+          element.linkedElement = clone;
+
+          observer.observe(element, mutationObserverConfig);
+
+          if(element.style) {
+            copyStyles(element, clone);
+          }
+
+          var children;
+          if(element.childNodes) {
+            for (var i = 0; i < element.childNodes.length; i++) {
+              clone.appendChild(cloneAndLinkElement(element.childNodes[i]));
             };
           }
 
-          element.linkedElement = clone;
-          copyStyles(element, clone);
+          if(element.shadowRoot) {
+            observer.observe(element.shadowRoot, mutationObserverConfig);
 
-          observer.observe(element, mutationObserverConfig);
+            clone.shadowRoot.innerHTML = '';
+            for (var i = 0; i < element.shadowRoot.childNodes.length; i++) {
+              clone.shadowRoot.appendChild(cloneAndLinkElement(element.shadowRoot.childNodes[i]));
+            };
+          }
 
           return clone;
         };
@@ -175,10 +174,8 @@ Element providing solution to no problem in particular.
           e.target.linkedElement.scrollLeft = e.target.scrollLeft;
         }
 
-        var temp = document.createElement('div');
-
-        for (var i = 0; i < this.children.length; i++) {
-          this.$.vrSideContent.appendChild(cloneAndLinkElement(this.children[i]));
+        for (var i = 0; i < this.childNodes.length; i++) {
+          this.$.vrSideContent.appendChild(cloneAndLinkElement(this.childNodes[i]));
         };
 
         this.addEventListener('scroll', onElementScroll, true);
