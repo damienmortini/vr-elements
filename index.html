@@ -1,15 +1,63 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-  <script src="../platform/platform.js"></script>
-  <link rel="import" href="../polymer/polymer.html">
-  <link rel="import" href="../core-component-page/core-component-page.html">
-
+  <meta charset="UTF-8">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    vr-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+    vr-dom {
+      height: 100%;
+    }
+    vr-dom .content {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: .4s all;
+    }
+    vr-dom .content.hover {
+      transform: translateY(-100px);
+    }
+  </style>
+  <script src="jspm_packages/system.js"></script>
+  <script src="config.js"></script>
+  <script type="text/javascript">
+    (!/dev/.test(window.location.search) ? System.import("build/index.js") : System.import("webcomponents.js"))
+    .catch(function(e) {
+      console.log(e);
+    })
+    .then(function() {
+      return System.import("src/index.js");
+    })
+    .catch(function(e) {
+      console.log(e);
+    });
+  </script>
 </head>
-<body unresolved>
-
-  <core-component-page></core-component-page>
-
+<body>
+  <vr-dom>
+    <div class="content">
+      <h1>VR Ready</h1>
+      <p>Look at me in a cardboard</p>
+    </div>
+  </vr-dom>
+  <vr-button></vr-button>
+  <script>
+    var vrDomElement = document.querySelector("vr-dom");
+    document.querySelector("vr-button").addEventListener("click", function() {
+      vrDomElement.split = !vrDomElement.split;
+    });
+  </script>
 </body>
 </html>

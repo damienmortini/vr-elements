@@ -1,0 +1,43 @@
+<style>
+  :host {
+    display: block;
+    position: relative;
+  }
+  :host #vr-main-container, :host #vr-main-content, :host #vr-side-container, :host #vr-side-content {
+    position: absolute;
+    height: 100%;
+    top: 0;
+  }
+  :host(:not([split])) #vr-main-container, :host(:not([split])) #vr-main-content {
+    width: 100%;
+    left: 0;
+  }
+  :host #vr-side-container {
+    pointer-events: none;
+  }
+  :host(:not([split])) #vr-side-container {
+    display: none;
+  }
+  :host([split]) #vr-main-container, :host([split]) #vr-side-container {
+    overflow: hidden;
+    width: 50%;
+  }
+  :host([split]) #vr-main-content, :host([split]) #vr-side-content {
+    width: 120%;
+  }
+  :host([split]) #vr-main-container, :host([split]) #vr-main-content {
+    left: 0;
+  }
+  :host([split]) #vr-side-container, :host([split]) #vr-side-content {
+    right: 0;
+  }
+</style>
+<div id="vr-main-container">
+  <div id="vr-main-content">
+    <content></content>
+  </div>
+</div>
+<div id="vr-side-container">
+  <div id="vr-side-content"></div>
+</div>
+</template>

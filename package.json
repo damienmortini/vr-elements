@@ -1,0 +1,32 @@
+{
+  "name": "",
+  "version": "0.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "init": "npm update --save && jspm init --yes && jspm update",
+    "install": "npm install && jspm install",
+    "start": "browser-sync start --files \"src\" --server --no-notify",
+    "build": "jspm bundle src/index.js build/index.js",
+    "release": "jspm bundle src/index.js build/index.js --minify",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Damien Mortini",
+  "license": "MIT",
+  "dependencies": {
+    "browser-sync": "^2.11.0",
+    "jspm": "^0.16.19"
+  },
+  "jspm": {
+    "dependencies": {
+      "dlib": "npm:dlib@^0.0.2",
+      "text": "github:systemjs/plugin-text@^0.0.2",
+      "webcomponents.js": "npm:webcomponents.js@^0.7.20"
+    },
+    "devDependencies": {
+      "babel": "npm:babel-core@^5.8.24",
+      "babel-runtime": "npm:babel-runtime@^5.8.24",
+      "core-js": "npm:core-js@^1.1.4"
+    }
+  }
+}
